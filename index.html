@@ -1,13 +1,716 @@
 <!DOCTYPE html>
-<html>
+<html lang="th">
 <head>
-<title>Page Title</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>เครื่องวัดระดับน้ำ ESP32 CYD</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --primary: #667eea;
+            --secondary: #764ba2;
+            --accent: #f093fb;
+            --light-bg: #f8f9fa;
+            --text-dark: #2d3748;
+            --text-light: #718096;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+        
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 50px 40px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -10%;
+            width: 300px;
+            height: 300px;
+            background: rgba(255,255,255,0.1);
+            border-radius: 50%;
+        }
+        
+        header h1 {
+            font-size: 2.8em;
+            margin-bottom: 10px;
+            position: relative;
+            z-index: 1;
+            animation: slideDown 0.6s ease-out;
+        }
+        
+        header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+            position: relative;
+            z-index: 1;
+            animation: slideUp 0.6s ease-out 0.2s backwards;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .content {
+            padding: 50px 40px;
+        }
+        
+        section {
+            margin-bottom: 40px;
+        }
+        
+        section h2 {
+            color: var(--primary);
+            font-size: 2em;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 3px solid var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .info-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #eef0ff 100%);
+            border-left: 5px solid var(--primary);
+            padding: 25px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+        
+        .info-card:hover {
+            transform: translateX(8px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.15);
+        }
+        
+        .info-card h3 {
+            color: var(--secondary);
+            margin-bottom: 12px;
+            font-size: 1.4em;
+        }
+        
+        .info-card p {
+            color: var(--text-light);
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+        
+        .creator-section {
+            background: linear-gradient(135deg, rgba(102,126,234,0.1) 0%, rgba(118,75,162,0.1) 100%);
+            padding: 30px;
+            border-radius: 15px;
+            margin-bottom: 40px;
+            border: 2px solid var(--primary);
+        }
+        
+        .creator-section h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+        
+        .creator-info {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+        
+        .creator-item {
+            padding: 20px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border-top: 4px solid var(--accent);
+            transition: transform 0.3s ease;
+        }
+        
+        .creator-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .creator-item strong {
+            color: var(--secondary);
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.05em;
+        }
+        
+        .creator-item span {
+            color: var(--text-light);
+            display: block;
+            font-size: 1.1em;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 25px 0;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+        }
+        
+        table th {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+        }
+        
+        table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            color: var(--text-light);
+        }
+        
+        table tr:hover {
+            background: var(--light-bg);
+        }
+        
+        .objectives-grid, .scope-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .objective-item, .scope-item {
+            background: linear-gradient(135deg, #ffffff 0%, var(--light-bg) 100%);
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 4px solid var(--primary);
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .objective-item:hover, .scope-item:hover {
+            transform: translateY(-3px);
+        }
+        
+        .objective-item::before, .scope-item::before {
+            content: '';
+            display: inline-block;
+            width: 24px;
+            height: 24px;
+            background: var(--primary);
+            border-radius: 50%;
+            color: white;
+            text-align: center;
+            line-height: 24px;
+            margin-right: 10px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        
+        .objective-item:nth-child(1)::before { content: '1'; }
+        .objective-item:nth-child(2)::before { content: '2'; }
+        .objective-item:nth-child(3)::before { content: '3'; }
+        .objective-item:nth-child(4)::before { content: '4'; }
+        .objective-item:nth-child(5)::before { content: '5'; }
+        .objective-item:nth-child(6)::before { content: '6'; }
+        .objective-item:nth-child(7)::before { content: '7'; }
+        
+        .objective-item p, .scope-item p {
+            color: var(--text-light);
+            line-height: 1.6;
+        }
+        
+        .workflow-section {
+            background: linear-gradient(135deg, #ffffff 0%, var(--light-bg) 100%);
+            padding: 30px;
+            border-radius: 15px;
+            border: 2px solid var(--primary);
+            margin-top: 20px;
+        }
+        
+        .workflow-steps {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+        
+        .step {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+        
+        .step:hover {
+            transform: translateY(-5px);
+        }
+        
+        .step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            border-radius: 50%;
+            line-height: 40px;
+            margin-bottom: 10px;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        
+        .step h4 {
+            color: var(--text-dark);
+            margin: 10px 0;
+        }
+        
+        .step p {
+            color: var(--text-light);
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        
+        .diagram {
+            background: white;
+            padding: 30px;
+            border: 3px solid var(--primary);
+            border-radius: 15px;
+            margin: 25px 0;
+            font-family: 'Courier New', monospace;
+            color: var(--text-dark);
+            line-height: 1.8;
+            overflow-x: auto;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .feature-card {
+            background: linear-gradient(135deg, white 0%, var(--light-bg) 100%);
+            padding: 25px;
+            border-radius: 12px;
+            text-align: center;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--accent);
+            transition: transform 0.3s ease;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-8px);
+        }
+        
+        .feature-icon {
+            font-size: 2.5em;
+            margin-bottom: 15px;
+        }
+        
+        .feature-card h4 {
+            color: var(--text-dark);
+            margin-bottom: 10px;
+        }
+        
+        .feature-card p {
+            color: var(--text-light);
+            font-size: 0.95em;
+            line-height: 1.6;
+        }
+        
+        footer {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            padding: 40px 30px;
+            text-align: center;
+            color: white;
+            border-top: 1px solid rgba(0,0,0,0.1);
+        }
+        
+        footer p {
+            margin-bottom: 8px;
+            opacity: 0.95;
+        }
+        
+        .footer-highlight {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 2em;
+            }
+            
+            .content {
+                padding: 25px;
+            }
+            
+            section h2 {
+                font-size: 1.5em;
+            }
+            
+            .creator-info {
+                grid-template-columns: 1fr;
+            }
+            
+            .workflow-steps {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
 </head>
 <body>
+    <div class="container">
+        <header>
+            <h1>🌊 เครื่องวัดระดับน้ำ</h1>
+            <p>ด้วย ESP32-2432S028R (CYD) และ Water Level Sensor</p>
+        </header>
+        
+        <div class="content">
+            <!-- ข้อมูลผู้จัดทำ -->
+            <section>
+                <h2>👤 ข้อมูลผู้จัดทำ</h2>
+                <div class="creator-section">
+                    <div class="creator-info">
+                        <div class="creator-item">
+                            <strong>ชื่อผู้จัดทำ</strong>
+                            <span>นาย ภูธเนศ ชิตพงษ์</span>
+                        </div>
+                        <div class="creator-item">
+                            <strong>สาขาวิชา</strong>
+                            <span>เทคโนโลยีคอมพิวเตอร์</span>
+                        </div>
+                        <div class="creator-item">
+                            <strong>สถานศึกษา</strong>
+                            <span>วิทยาลัยเทคนิคตรัง</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- หลักการและเหตุผล -->
+            <section>
+                <h2>💡 หลักการและเหตุผล</h2>
+                <div class="info-card">
+                    <p>การตรวจสอบระดับน้ำในถังหรือภาชนะต่าง ๆ ในชีวิตประจำวันมักจำเป็นต้องอาศัยการสังเกตด้วยตนเอง ซึ่งอาจทำให้ไม่สามารถทราบระดับน้ำได้อย่างแม่นยำและต่อเนื่อง ประกอบกับการสังเกตด้วยตนเองในหลายบริบทอาจไม่สะดวกและเสียเวลา</p>
+                    <p style="margin-top: 15px;">โครงงานนี้ได้นำเอา <strong>Water Level Sensor</strong> มาใช้ในการตรวจวัดระดับน้ำ และใช้ <strong>ESP32-2432S028R (Cheap Yellow Display: CYD)</strong> ในการประมวลผลและแสดงข้อมูลผ่านหน้าจอ TFT แบบเรียลไทม์ เพื่อให้ผู้ใช้สามารถตรวจสอบระดับน้ำได้สะดวก เข้าใจง่าย และมีความแม่นยำสูง</p>
+                </div>
+            </section>
+            
+            <!-- วัตถุประสงค์ -->
+            <section>
+                <h2>🎯 วัตถุประสงค์</h2>
+                <div class="objectives-grid">
+                    <div class="objective-item">
+                        <p>สร้างเครื่องสำหรับตรวจวัดระดับน้ำ</p>
+                    </div>
+                    <div class="objective-item">
+                        <p>ศึกษาการทำงานของ Water Level Sensor</p>
+                    </div>
+                    <div class="objective-item">
+                        <p>ศึกษาการใช้งานบอร์ด ESP32-2432S028R (CYD)</p>
+                    </div>
+                    <div class="objective-item">
+                        <p>ศึกษาการแสดงผลข้อมูลผ่านหน้าจอ TFT</p>
+                    </div>
+                    <div class="objective-item">
+                        <p>ศึกษาการใช้งานระบบ Touch Screen XPT2046</p>
+                    </div>
+                    <div class="objective-item">
+                        <p>แสดงระดับน้ำในรูปแบบเปอร์เซ็นต์และสถานะ</p>
+                    </div>
+                    <div class="objective-item">
+                        <p>พัฒนาต้นแบบระบบตรวจวัดระดับน้ำที่สามารถนำไปต่อยอดได้</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- ขอบเขตของโครงงาน -->
+            <section>
+                <h2>📋 ขอบเขตของโครงงาน</h2>
+                <div class="scope-grid">
+                    <div class="scope-item">
+                        <p>ใช้ ESP32-2432S028R (CYD) เป็นตัวควบคุมหลัก</p>
+                    </div>
+                    <div class="scope-item">
+                        <p>ใช้ Water Level Sensor เป็นตัวตรวจวัดระดับน้ำ</p>
+                    </div>
+                    <div class="scope-item">
+                        <p>เชื่อมต่อสัญญาณของเซนเซอร์เข้าที่ GPIO 27</p>
+                    </div>
+                    <div class="scope-item">
+                        <p>แสดงข้อมูลผ่านหน้าจอ TFT ขนาด 2.8 นิ้ว</p>
+                    </div>
+                    <div class="scope-item">
+                        <p>ใช้ระบบ Touch Screen สำหรับควบคุมเมนู</p>
+                    </div>
+                    <div class="scope-item">
+                        <p>มีเมนูหลักสำหรับเลือกหน้าการทำงาน</p>
+                    </div>
+                    <div class="scope-item">
+                        <p>มีหน้าสำหรับดูระดับน้ำเป็นเปอร์เซ็นต์</p>
+                    </div>
+                    <div class="scope-item">
+                        <p>มีหน้าสำหรับดูข้อมูลบอร์ดและเซนเซอร์</p>
+                    </div>
+                    <div class="scope-item">
+                        <p>สามารถย้อนกลับด้วยปุ่ม &lt; ที่มุมซ้ายบน</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- วิธีการทำงาน -->
+            <section>
+                <h2>⚙️ วิธีการทำงาน</h2>
+                <div class="workflow-section">
+                    <h3>ขั้นตอนการทำงานของระบบ</h3>
+                    <div class="workflow-steps">
+                        <div class="step">
+                            <div class="step-number">1</div>
+                            <h4>รับสัญญาณ</h4>
+                            <p>Water Level Sensor ส่งสัญญาณแอนะล็อก เข้า GPIO 27</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">2</div>
+                            <h4>อ่านค่า ADC</h4>
+                            <p>ESP32 อ่านค่าแรงดันไฟฟ้า (0-3.3V) ผ่าน ADC</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">3</div>
+                            <h4>ประมวลผล</h4>
+                            <p>คำนวณระดับน้ำจากค่า ADC เป็นเปอร์เซ็นต์</p>
+                        </div>
+                        <div class="step">
+                            <div class="step-number">4</div>
+                            <h4>แสดงผล</h4>
+                            <p>แสดงข้อมูลบนหน้าจอ TFT พร้อมสถานะ</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- อุปกรณ์ที่ใช้ -->
+            <section>
+                <h2>🔧 อุปกรณ์ที่ใช้</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>ลำดับ</th>
+                            <th>อุปกรณ์</th>
+                            <th>จำนวน</th>
+                            <th>หน้าที่</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>1</td>
+                            <td><strong>ESP32-2432S028R (CYD)</strong></td>
+                            <td>1</td>
+                            <td>ประมวลผลและควบคุมระบบ</td>
+                        </tr>
+                        <tr>
+                            <td>2</td>
+                            <td><strong>TFT LCD 2.8 นิ้ว</strong></td>
+                            <td>1</td>
+                            <td>แสดงผลข้อมูล</td>
+                        </tr>
+                        <tr>
+                            <td>3</td>
+                            <td><strong>XPT2046 Touch Screen</strong></td>
+                            <td>1</td>
+                            <td>รับคำสั่งจากการสัมผัส</td>
+                        </tr>
+                        <tr>
+                            <td>4</td>
+                            <td><strong>Water Level Sensor</strong></td>
+                            <td>1</td>
+                            <td>ตรวจวัดระดับน้ำ</td>
+                        </tr>
+                        <tr>
+                            <td>5</td>
+                            <td><strong>สาย Jumper</strong></td>
+                            <td>ตามความเหมาะสม</td>
+                            <td>เชื่อมต่อวงจร</td>
+                        </tr>
+                        <tr>
+                            <td>6</td>
+                            <td><strong>Power Supply 5V</strong></td>
+                            <td>1</td>
+                            <td>ให้พลังงานแก่ระบบ</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+            
+            <!-- การต่ออุปกรณ์ -->
+            <section>
+                <h2>⚡ การต่ออุปกรณ์</h2>
+                <div class="info-card">
+                    <h3>Water Level Sensor ↔ ESP32</h3>
+                    <div class="diagram">
+┌─────────────────────────────────────────┐
+│  Water Level Sensor  │  ESP32 CYD       │
+├─────────────────────────────────────────┤
+│  GND (หลำดำ)         │  GND             │
+│  VCC (แดง)           │  5V              │
+│  SIG/S (เหลือง)      │  GPIO 27 (ADC)   │
+└─────────────────────────────────────────┘
 
-<h1>555</h1>
-<p> paragraph.</p>
-
+การเชื่อมต่อ:
+  • Ground ↔ Ground
+  • 5V Power ↔ VCC
+  • Signal Output ↔ GPIO 27
+                    </div>
+                </div>
+            </section>
+            
+            <!-- ฟีเจอร์และความสามารถ -->
+            <section>
+                <h2>✨ ฟีเจอร์และความสามารถ</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">📊</div>
+                        <h4>แสดงผลเป็นเปอร์เซ็นต์</h4>
+                        <p>แสดงระดับน้ำเป็นค่าเปอร์เซ็นต์ (0-100%)</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎨</div>
+                        <h4>หน้าจอกราฟิก</h4>
+                        <p>แสดงกราฟแท่ง (Bar Chart) เพื่อให้เห็นภาพ</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎯</div>
+                        <h4>สถานะระดับน้ำ</h4>
+                        <p>แสดงสถานะ: ต่ำ ปกติ สูง เต็ม</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📱</div>
+                        <h4>ควบคุมด้วย Touch Screen</h4>
+                        <p>ใช้ XPT2046 Touch Controller สำหรับการควบคุม</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h4>อัพเดตเรียลไทม์</h4>
+                        <p>อัพเดตข้อมูลแบบเรียลไทม์ทุก 100ms</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💾</div>
+                        <h4>บันทึกข้อมูล</h4>
+                        <p>สามารถบันทึกข้อมูลเซนเซอร์สำหรับวิเคราะห์</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- ข้อดีของโครงงาน -->
+            <section>
+                <h2>🏆 ข้อดีของโครงงาน</h2>
+                <div class="features-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h4>ใช้พลังงานต่ำ</h4>
+                        <p>ESP32 มีประสิทธิภาพการใช้พลังงานสูง</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🛠️</div>
+                        <h4>ติดตั้งง่าย</h4>
+                        <p>ไม่ต้องประสบการณ์มากมายในการติดตั้ง</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">💰</div>
+                        <h4>ราคาประหยัด</h4>
+                        <p>ใช้อุปกรณ์ที่มีราคาไม่แพง</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔧</div>
+                        <h4>ปรับแต่งได้</h4>
+                        <p>สามารถปรับแต่งและเพิ่มฟีเจอร์ได้ง่าย</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📡</div>
+                        <h4>ขยายได้</h4>
+                        <p>สามารถเพิ่มเมนูและความสามารถเพิ่มเติม</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🎓</div>
+                        <h4>เพื่อการศึกษา</h4>
+                        <p>เหมาะสำหรับการเรียนและวิจัย IoT</p>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- การพัฒนาต่อ -->
+            <section>
+                <h2>🚀 การพัฒนาต่อและข้อเสนอแนะ</h2>
+                <div class="info-card">
+                    <h3>ความเป็นไปได้ในการต่อยอด</h3>
+                    <ul style="margin-left: 25px; line-height: 1.8; color: var(--text-light);">
+                        <li>เพิ่มความสามารถในการเชื่อมต่อ WiFi เพื่ออัพโหลดข้อมูลลง Cloud</li>
+                        <li>เพิ่มระบบแจ้งเตือน (Notification) เมื่อระดับน้ำผิดปกติ</li>
+                        <li>เพิ่มระบบบันทึกข้อมูลในหน่วยความจำภายใน (SPIFFS)</li>
+                        <li>เพิ่มการเชื่อมต่อกับฐานข้อมูล MySQL สำหรับการเก็บข้อมูลระยะยาว</li>
+                        <li>พัฒนาแอปพลิเคชัน Mobile เพื่อควบคุมและตรวจสอบจากระยะไกล</li>
+                        <li>เพิ่มระบบตรวจจับการรั่วไหล (Leak Detection)</li>
+                        <li>ยอมรับการวัดหลากหลายประเภทของเซนเซอร์</li>
+                    </ul>
+                </div>
+            </section>
+        </div>
+        
+        <footer>
+            <div class="footer-highlight">เครื่องวัดระดับน้ำ ESP32-2432S028R (CYD)</div>
+            <p>โครงงานของ นาย ภูธเนศ ชิตพงษ์</p>
+            <p>สาขา เทคโนโลยีคอมพิวเตอร์ | วิทยาลัยเทคนิคตรัง</p>
+            <p style="margin-top: 15px; opacity: 0.8; font-size: 0.9em;">© 2024-2025 Water Level Monitoring System</p>
+        </footer>
+    </div>
 </body>
 </html>
 
